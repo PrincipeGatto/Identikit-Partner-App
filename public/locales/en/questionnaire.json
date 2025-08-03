@@ -1,0 +1,12 @@
+{
+  "title": "Ideal Partner Questionnaire",
+  "next": "Next",
+  "questions": {
+    "1": "How important is honesty to you in a relationship?",
+    "2": "How would you describe your daily lifestyle?"
+  },
+  "options": {
+    "1": ["1 Not at all","2 A little","3 Fairly","4 Very","5 Absolutely"],
+    "2": ["Very active","Balanced","Relaxed"]
+  }
+}
