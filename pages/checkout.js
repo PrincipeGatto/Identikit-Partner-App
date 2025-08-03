@@ -1,10 +1,11 @@
 // pages/checkout.js
+
 import { useEffect } from 'react';
 
 export default function Checkout() {
   useEffect(() => {
     fetch('/api/checkout', { method: 'POST' })
-      .then(r => r.json())
+      .then(res => res.json())
       .then(data => {
         window.location.href = data.url;
       })
@@ -17,4 +18,3 @@ export default function Checkout() {
     </div>
   );
 }
-
