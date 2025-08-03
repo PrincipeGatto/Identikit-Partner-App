@@ -34,6 +34,8 @@ export default function Download() {
         document.body.appendChild(a);
         a.click();
         a.remove();
+        // Solo adesso cancelliamo le risposte
+        localStorage.removeItem('identikit_answers');
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
