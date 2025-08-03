@@ -20,10 +20,11 @@ export default function Checkout() {
   );
 }
 
-// Punto 1: forziamo il caricamento del namespace 'common' per evitare errori di prerender
-export async function getStaticProps({ locale }) {
+// Usa getServerSideProps invece di getStaticProps
+export async function getServerSideProps({ locale }) {
   return {
     props: {
+      // Carica il namespace 'common' ad ogni richiesta
       ...(await serverSideTranslations(locale, ['common'])),
     },
   };
