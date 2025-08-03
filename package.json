@@ -12,6 +12,7 @@
     "react": "18.x",
     "react-dom": "18.x",
     "stripe": "^11.17.0"
+     "pdfkit": "^0.13.0"
   },
   "devDependencies": {
     "tailwindcss": "^3.0.0",
