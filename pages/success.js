@@ -1,16 +1,11 @@
 // pages/success.js
 
-import { useEffect } from 'react';
 import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 export default function Success() {
   const { t } = useTranslation('common');
-
-  useEffect(() => {
-    localStorage.removeItem('identikit_answers');
-  }, []);
 
   return (
     <div className="max-w-xl mx-auto p-4 text-center">
