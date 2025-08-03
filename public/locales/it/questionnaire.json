@@ -1,0 +1,12 @@
+{
+  "title": "Questionario Partner Ideale",
+  "next": "Avanti",
+  "questions": {
+    "1": "Quanto è importante per te l’onestà in una relazione?",
+    "2": "Come definiresti il tuo stile di vita quotidiano?"
+  },
+  "options": {
+    "1": ["1 Per nulla","2 Poco","3 Abbastanza","4 Molto","5 Essenziale"],
+    "2": ["Molto attivo","Equilibrato","Rilassato"]
+  }
+}
