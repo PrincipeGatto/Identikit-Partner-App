@@ -2,6 +2,6 @@
   "appTitle": "Partner Profile",
   "startButton": "Start Questionnaire",
   "submitButton": "Submit",
-  "loading": "Loading…",
+  "loading": "Redirecting to payment",
   "error": "An error occurred"
 }
