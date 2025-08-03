@@ -1,0 +1,9 @@
+{
+  "header": "Identikit Socio-Psicologico del Partner Ideale",
+  "sections": {
+    "1": { "title": "Il tuo profilo", "intro": "Ecco l’analisi delle tue risposte:" },
+    "2": { "title": "Profilo del partner ideale", "intro": "Il partner ideale possiede questi tratti:" },
+    "3": { "title": "Luoghi consigliati", "intro": "Ti suggeriamo di frequentare:" },
+    "4": { "title": "Strategie di approccio", "intro": "Ecco come avvicinarti:" }
+  }
+}
