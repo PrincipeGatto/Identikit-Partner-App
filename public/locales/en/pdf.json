@@ -1,9 +1,72 @@
 {
   "header": "Socio-Psychological Ideal Partner Profile",
   "sections": {
-    "1": { "title": "Your Profile", "intro": "Here is the analysis of your answers:" },
-    "2": { "title": "Ideal Partner Profile", "intro": "The ideal partner has these traits:" },
-    "3": { "title": "Recommended Places", "intro": "We suggest you frequent:" },
-    "4": { "title": "Approach Strategies", "intro": "Here’s how to approach:" }
+    "1": {
+      "title": "Your Profile",
+      "intro": "Here is the personalized analysis based on your answers:"
+    },
+    "2": {
+      "title": "Ideal Partner Profile",
+      "intro": "Your ideal partner exhibits these complementary traits:"
+    },
+    "3": {
+      "title": "Recommended Places",
+      "intro": "We suggest you frequent the following venues to increase your chances:"
+    },
+    "4": {
+      "title": "Approach Strategies",
+      "intro": "Here are practical tips on how to break the ice and make contact:"
+    }
+  },
+  "places": [
+    "Literary cafés and book clubs",
+    "International cooking workshops",
+    "Improv comedy events",
+    "Guided hikes and trekking",
+    "Outdoor yoga classes",
+    "Quiz nights at themed pubs",
+    "Cultural trips in art cities",
+    "Wine and craft beer tastings",
+    "Dance lessons (salsa, tango, swing)",
+    "Park running or walking groups",
+    "Ceramics and crafts workshops",
+    "Professional networking events",
+    "Open-air and drive-in cinemas",
+    "Independent music festivals",
+    "Vintage markets and flea fairs",
+    "Gastronomic tours in historic shops",
+    "Meditation and mindfulness sessions",
+    "Nature photography courses",
+    "Board game and role-playing nights",
+    "Creative writing workshops",
+    "Adventure travel (rafting, canyoning)",
+    "Theatre productions and experimental shows",
+    "Martial arts and self-defense classes",
+    "Urban guided historic treks"
+  ],
+  "approaches": [
+    "Start conversations about books or movies",
+    "Use humor to break the ice",
+    "Suggest a shared activity like a workshop",
+    "Show interest in their hobbies by asking details",
+    "Maintain open body language and a smile",
+    "Ask open-ended questions to encourage sharing",
+    "Avoid talking too much about yourself initially",
+    "Invite them to an event related to their interests",
+    "Be authentic and share a personal anecdote",
+    "Listen actively and follow up on their responses",
+    "Give sincere and specific compliments",
+    "Respect their pace and don’t force answers",
+    "Send a follow-up message within 24 hours",
+    "Propose a light challenge or game to break the ice",
+    "Show empathy by acknowledging their emotions",
+    "Choose a relaxed, uncrowded setting",
+    "Ensure the conversation is balanced: give and take",
+    "Use small courtesy gestures (offer a coffee)",
+    "Engage them in a creative activity together",
+    "End the meeting with a concrete next-step proposal"
+  ],
+  "options": {
+    "1": ["1 Not at all","2 A little","3 Fairly","4 Very","5 Absolutely"]
   }
 }
