@@ -1,0 +1,9 @@
+{
+  "header": "Socio-Psychological Ideal Partner Profile",
+  "sections": {
+    "1": { "title": "Your Profile", "intro": "Here is the analysis of your answers:" },
+    "2": { "title": "Ideal Partner Profile", "intro": "The ideal partner has these traits:" },
+    "3": { "title": "Recommended Places", "intro": "We suggest you frequent:" },
+    "4": { "title": "Approach Strategies", "intro": "Here’s how to approach:" }
+  }
+}
