@@ -1,16 +1,18 @@
 // pages/download.js
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 export default function Download() {
+  const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const answers = JSON.parse(localStorage.getItem('identikit_answers') || '[]');
     if (!answers.length) {
-      setError('Non ci sono risposte salvate. Completa prima il questionario.');
+      setError(t('noAnswers'));
       return;
     }
 
@@ -18,13 +20,13 @@ export default function Download() {
     fetch('/api/generate-pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers })
+      body: JSON.stringify({ answers }),
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Errore nella generazione del PDF');
+      .then((res) => {
+        if (!res.ok) throw new Error(t('pdfError'));
         return res.blob();
       })
-      .then(blob => {
+      .then((blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -33,9 +35,9 @@ export default function Download() {
         a.click();
         a.remove();
       })
-      .catch(err => setError(err.message))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   if (error) {
     return (
@@ -47,16 +49,11 @@ export default function Download() {
 
   return (
     <div className="flex h-screen items-center justify-center">
-      {loading ? (
-        <p>Generazione PDF in corso, attendi…</p>
-      ) : (
-        <p>Preparazione download…</p>
-      )}
+      {loading ? <p>{t('generatingPDF')}</p> : <p>{t('preparingDownload')}</p>}
     </div>
   );
 }
 
-// Anche qui usiamo getServerSideProps per il namespace 'common'
 export async function getServerSideProps({ locale }) {
   return {
     props: {
