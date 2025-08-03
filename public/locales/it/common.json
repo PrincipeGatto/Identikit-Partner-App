@@ -2,6 +2,14 @@
   "appTitle": "Identikit Partner",
   "startButton": "Inizia il questionario",
   "submitButton": "Invia",
-  "loading": "Reindirizzamento al pagamento",
-  "error": "Si è verificato un errore"
+  "error": "Si è verificato un errore",
+  "loading": "Reindirizzamento al pagamento…",
+  "summaryTitle": "Riepilogo delle tue risposte",
+  "proceedToPayment": "Procedi al pagamento (€9,90)",
+  "thankYou": "Grazie per il tuo acquisto!",
+  "generatingPDF": "Stiamo generando il tuo PDF…",
+  "downloadButton": "Scarica il tuo identikit",
+  "noAnswers": "Non ci sono risposte salvate. Completa prima il questionario.",
+  "pdfError": "Errore nella generazione del PDF",
+  "preparingDownload": "Preparazione download…"
 }
