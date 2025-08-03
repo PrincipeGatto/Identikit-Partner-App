@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 const questions = [
   { id: 1, text: "Quanto è importante per te l'umorismo in una relazione?", options: ["Per nulla", "Poco", "Abbastanza", "Molto", "Essenziale"] },
@@ -13,19 +14,37 @@ const questions = [
   { id: 10, text: "Preferisci una persona simile o complementare a te?", options: ["Molto simile", "Piuttosto simile", "Equilibrata", "Piuttosto diversa", "Molto diversa"] }
 ];
 
+const STORAGE_KEY = 'identikit_answers';
+
 export default function Questionario() {
+  const router = useRouter();
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
 
+  // Carica eventuali risposte già salvate
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setAnswers(JSON.parse(saved));
+    }
+  }, []);
+
+  // Salva in localStorage ad ogni cambio delle risposte
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+  }, [answers]);
+
   const handleAnswer = (value) => {
-    const newAnswers = [...answers];
-    newAnswers[current] = value;
-    setAnswers(newAnswers);
+    // aggiorna l'array delle risposte
+    const newAns = [...answers];
+    newAns[current] = value;
+    setAnswers(newAns);
 
     if (current < questions.length - 1) {
       setCurrent(current + 1);
     } else {
-      alert("Hai completato il questionario! Prossimamente salveremo le risposte.");
+      // vai al riepilogo
+      router.push('/riepilogo');
     }
   };
 
@@ -34,16 +53,23 @@ export default function Questionario() {
 
   return (
     <div className="max-w-xl mx-auto p-4">
+      {/* Barra di avanzamento */}
       <div className="mb-4">
         <div className="text-sm text-gray-600 mb-1">
           Domanda {current + 1} di {questions.length}
         </div>
         <div className="w-full bg-gray-300 h-2 rounded">
-          <div className="bg-blue-500 h-2 rounded" style={{ width: `${progress}%` }}></div>
+          <div
+            className="bg-blue-500 h-2 rounded"
+            style={{ width: `${progress}%` }}
+          ></div>
         </div>
       </div>
 
+      {/* Testo della domanda */}
       <h2 className="text-xl font-bold mb-4">{q.text}</h2>
+
+      {/* Opzioni di risposta */}
       <div className="space-y-2">
         {q.options.map((opt, idx) => (
           <button
