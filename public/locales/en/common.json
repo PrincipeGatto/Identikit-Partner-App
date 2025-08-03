@@ -2,6 +2,14 @@
   "appTitle": "Partner Profile",
   "startButton": "Start Questionnaire",
   "submitButton": "Submit",
-  "loading": "Redirecting to payment",
-  "error": "An error occurred"
+  "error": "An error occurred",
+  "loading": "Redirecting to payment…",
+  "summaryTitle": "Summary of Your Answers",
+  "proceedToPayment": "Proceed to Payment (€9.90)",
+  "thankYou": "Thank you for your purchase!",
+  "generatingPDF": "We are generating your PDF…",
+  "downloadButton": "Download your profile",
+  "noAnswers": "No saved answers. Please complete the questionnaire first.",
+  "pdfError": "Error generating the PDF",
+  "preparingDownload": "Preparing download…"
 }
