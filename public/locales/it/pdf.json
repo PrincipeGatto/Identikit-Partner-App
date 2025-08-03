@@ -1,9 +1,72 @@
 {
   "header": "Identikit Socio-Psicologico del Partner Ideale",
   "sections": {
-    "1": { "title": "Il tuo profilo", "intro": "Ecco l’analisi delle tue risposte:" },
-    "2": { "title": "Profilo del partner ideale", "intro": "Il partner ideale possiede questi tratti:" },
-    "3": { "title": "Luoghi consigliati", "intro": "Ti suggeriamo di frequentare:" },
-    "4": { "title": "Strategie di approccio", "intro": "Ecco come avvicinarti:" }
+    "1": {
+      "title": "Il tuo profilo",
+      "intro": "Di seguito l’analisi personalizzata basata sulle tue risposte:"
+    },
+    "2": {
+      "title": "Profilo del partner ideale",
+      "intro": "Il partner ideale possiede queste caratteristiche complementari:"
+    },
+    "3": {
+      "title": "Luoghi consigliati",
+      "intro": "Ti suggeriamo di frequentare i seguenti posti per aumentare le possibilità di incontro:"
+    },
+    "4": {
+      "title": "Strategie di approccio",
+      "intro": "Ecco consigli pratici su come rompere il ghiaccio e instaurare un contatto:"
+    }
+  },
+  "places": [
+    "Caffè letterari e club di lettura",
+    "Workshop di cucina internazionale",
+    "Eventi di improvvisazione comica",
+    "Escursioni guidate e trekking",
+    "Corsi di yoga all’aperto",
+    "Serate quiz in pub tematici",
+    "Viaggi culturali in città d’arte",
+    "Serate di degustazione vini e birre artigianali",
+    "Lezioni di ballo (salsa, tango, swing)",
+    "Gruppi di camminata o corsa al parco",
+    "Laboratori di ceramica e artigianato",
+    "Eventi di networking professionale",
+    "Cinema all’aperto e drive-in",
+    "Festival di musica indipendente",
+    "Mercatini vintage e fiere dell’usato",
+    "Tour gastronomici in botteghe storiche",
+    "Sessioni di meditazione e mindfulness",
+    "Corsi di fotografia naturalistica",
+    "Serate di giochi da tavolo e giochi di ruolo",
+    "Workshop di scrittura creativa",
+    "Viaggi avventura in natura (rafting, canyoning)",
+    "Rassegne teatrali e performance sperimentali",
+    "Corsi di arti marziali e autodifesa",
+    "Trekking urbano con guida storica"
+  ],
+  "approaches": [
+    "Inizia conversazioni su libri o film",
+    "Usa l’umorismo per rompere il ghiaccio",
+    "Proponi un’attività condivisa come un workshop",
+    "Mostra interesse per i suoi hobby chiedendo dettagli",
+    "Mantieni un linguaggio del corpo aperto e sorridente",
+    "Fai domande aperte che invitano a raccontarsi",
+    "Evita di parlare troppo di te stesso all’inizio",
+    "Invitala a un evento correlato ai suoi interessi",
+    "Sii autentico e condividi un aneddoto personale",
+    "Ascolta attivamente e fai follow-up sulle risposte",
+    "Usa complimenti sinceri e specifici",
+    "Rispetta i suoi tempi e non forzare le risposte",
+    "Invia un messaggio di follow-up entro 24 ore",
+    "Proponi una sfida o un gioco leggero per rompere il ghiaccio",
+    "Mostra empatia riconoscendo le sue emozioni",
+    "Scegli un ambiente rilassante e non troppo affollato",
+    "Fai sentire la conversazione bilanciata: dai e prendi",
+    "Utilizza piccoli gesti di cortesia (offri un caffè)",
+    "Coinvolgila in un’attività creativa insieme",
+    "Chiudi l’incontro con una proposta concreta per la prossima volta"
+  ],
+  "options": {
+    "1": ["1 Per nulla","2 Poco","3 Abbastanza","4 Molto","5 Essenziale"]
   }
 }
