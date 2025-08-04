@@ -10,39 +10,41 @@ export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
 };
 
-// Client OpenAI
 const openai = new OpenAIApi(
   new Configuration({ apiKey: process.env.OPENAI_API_KEY })
 );
 
-// Funzione per estrarre cookie dal header
-function parseCookie(cookieHeader) {
-  if (!cookieHeader) return {};
-  return cookieHeader
-    .split(';')
-    .map(v => v.split('='))
-    .reduce((acc, [k, v]) => {
-      acc[k.trim()] = decodeURIComponent(v);
-      return acc;
-    }, {});
+// Parse dei cookie
+function parseCookie(header) {
+  if (!header) return {};
+  return header.split(';').map(v => v.split('='))
+    .reduce((acc, [k, v]) => { acc[k.trim()] = decodeURIComponent(v); return acc; }, {});
 }
 
 export default async function handler(req, res) {
-  let answers;
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
 
+  // Permetti le chiamate anche da fetch
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  let answers;
   if (req.method === 'POST') {
-    // POST: prendi dal body
     answers = req.body.answers;
   } else if (req.method === 'GET') {
-    // GET: prendi dal cookie
-    const cookies = parseCookie(req.headers.cookie || '');
+    const cookies = parseCookie(req.headers.cookie);
     try {
       answers = JSON.parse(cookies.identikit_answers || '[]');
     } catch {
       answers = [];
     }
   } else {
-    res.setHeader('Allow', ['GET', 'POST']);
+    res.setHeader('Allow', ['GET','POST','OPTIONS']);
     return res.status(405).end('Method Not Allowed');
   }
 
@@ -50,7 +52,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Nessuna risposta ricevuta' });
   }
 
-  // Normalizza a 37 risposte
+  // Normalizza a 37
   const TOTAL_Q = 37;
   const normalized = Array.from({ length: TOTAL_Q }, (_, i) =>
     answers[i] !== undefined ? answers[i] : ''
@@ -60,22 +62,22 @@ export default async function handler(req, res) {
   const jsonPath = path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json');
   const pdfJson = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
-  // Costruisci il prompt per OpenAI
+  // Costruisci prompt per OpenAI
   const prompt = `
 Sei un assistente che genera report socio-psicologici dettagliati. 
-Ricevi 37 risposte utente:
+Ricevi 37 risposte:
 ${normalized.map((a,i) => `Domanda ${i+1}: ${Array.isArray(a)?a.join(', '):a}`).join('\n')}
 
-Struttura PDF (${locale}):
+Struttura:
 Titolo: ${pdfJson.header}
 1) ${pdfJson.sections['1'].title}: ${pdfJson.sections['1'].intro}
 2) ${pdfJson.sections['2'].title}: ${pdfJson.sections['2'].intro}
 3) ${pdfJson.sections['3'].title}: ${pdfJson.sections['3'].intro}
 4) ${pdfJson.sections['4'].title}: ${pdfJson.sections['4'].intro}
-Luoghi consigliati: ${pdfJson.places.join('; ')}
-Strategie di approccio: ${pdfJson.approaches.join('; ')}
+Luoghi: ${pdfJson.places.join('; ')}
+Approcci: ${pdfJson.approaches.join('; ')}
 
-Genera un testo di 1000–1200 parole, paragrafato per ciascuna sezione, senza aggiungere altri contenuti.
+Genera un testo di 1000–1200 parole, suddiviso in paragrafi per ciascuna sezione e per le liste.
 `;
 
   let report;
@@ -83,7 +85,7 @@ Genera un testo di 1000–1200 parole, paragrafato per ciascuna sezione, senza a
     const completion = await openai.createChatCompletion({
       model: 'gpt-4',
       messages: [
-        { role: 'system', content: 'Genera report PDF dettagliati.' },
+        { role: 'system', content: 'Genera report PDF.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -92,21 +94,19 @@ Genera un testo di 1000–1200 parole, paragrafato per ciascuna sezione, senza a
     report = completion.data.choices[0].message.content;
   } catch (err) {
     console.error('OpenAI error:', err);
-    return res.status(500).json({ error: 'Errore AI: ' + (err.message || err.toString()) });
+    return res.status(500).json({ error: 'Errore AI: ' + (err.message||err.toString()) });
   }
 
-  // Headers PDF
+  // Header PDF
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="identikit.pdf"');
 
   const doc = new PDFDocument({ margin: 50 });
   const stream = Readable.from(doc);
 
-  // Scrivi header
+  // Scrivi
   doc.fontSize(20).text(pdfJson.header, { align: 'center' });
   doc.moveDown();
-
-  // Suddividi report in paragrafi
   report.split(/\n{2,}/).forEach(para => {
     doc.fontSize(12).text(para.trim());
     doc.moveDown();
@@ -115,4 +115,3 @@ Genera un testo di 1000–1200 parole, paragrafato per ciascuna sezione, senza a
   doc.end();
   stream.pipe(res);
 }
-
