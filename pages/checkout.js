@@ -16,10 +16,10 @@ export default function Checkout() {
     setLoading(true);
     setError('');
 
-    // 1) Leggi TUTTE le risposte dal localStorage
+    // 1) Preleva tutte le risposte
     const answers = localStorage.getItem('identikit_answers');
     if (answers) {
-      // 2) Scrivi il cookie con validità 1h
+      // 2) Scrivi il cookie prima del redirect
       document.cookie = `identikit_answers=${encodeURIComponent(
         answers
       )}; max-age=${60 * 60}; path=/`;
@@ -30,11 +30,11 @@ export default function Checkout() {
     }
 
     try {
-      // 3) Creazione della sessione Stripe nel backend
+      // 3) Crea la sessione di checkout nel backend
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ /* puoi inviare dati aggiuntivi se serve */ }),
+        body: JSON.stringify({}),
       });
       if (!res.ok) throw new Error(t('error'));
       const { sessionId } = await res.json();
@@ -71,3 +71,4 @@ export async function getServerSideProps({ locale }) {
     },
   };
 }
+
