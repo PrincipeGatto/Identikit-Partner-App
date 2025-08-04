@@ -1,15 +1,18 @@
 {
   "appTitle": "Identikit Partner",
+  "welcomeMessage": "Benvenuto! Scopri il tuo partner ideale rispondendo a un breve questionario.",
   "startButton": "Inizia il questionario",
   "submitButton": "Invia",
   "error": "Si è verificato un errore",
-  "loading": "Reindirizzamento al pagamento…",
+  "loading": "Caricamento…",
+  "generatingPDF": "Generazione PDF in corso…",
+  "noAnswers": "Non ci sono risposte salvate. Completa prima il questionario.",
+  "pdfError": "Errore nella generazione del PDF",
   "summaryTitle": "Riepilogo delle tue risposte",
   "proceedToPayment": "Procedi al pagamento (€9,90)",
   "thankYou": "Grazie per il tuo acquisto!",
-  "generatingPDF": "Stiamo generando il tuo PDF…",
   "downloadButton": "Scarica il tuo identikit",
-  "noAnswers": "Non ci sono risposte salvate. Completa prima il questionario.",
-  "pdfError": "Errore nella generazione del PDF",
-  "preparingDownload": "Preparazione download…"
+  "downloadStarted": "Il download è stato avviato!",
+  "downloadIfNotStarted": "Se il download non parte automaticamente, usa il pulsante qui sotto:",
+  "downloadLink": "Scarica l’identikit manualmente"
 }
