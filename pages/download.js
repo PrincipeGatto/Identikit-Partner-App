@@ -1,6 +1,7 @@
 // pages/download.js
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
@@ -11,12 +12,14 @@ function getCookie(name) {
 }
 
 export default function Download() {
+  const router = useRouter();
+  const { locale, defaultLocale } = router;
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
-    // Legge le risposte dal cookie
     const cookie = getCookie('identikit_answers');
     const answers = cookie ? JSON.parse(cookie) : [];
 
@@ -26,14 +29,13 @@ export default function Download() {
       return;
     }
 
-    fetch('/api/generate-pdf', {
+    fetch(`/api/generate-pdf?locale=${locale || defaultLocale}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers }),
     })
       .then(async (res) => {
         if (!res.ok) {
-          // Proviamo a leggere un JSON d'errore o, in alternativa, testo semplice
           let errMsg = t('pdfError');
           try {
             const contentType = res.headers.get('content-type') || '';
@@ -43,23 +45,21 @@ export default function Download() {
             } else {
               errMsg = await res.text();
             }
-          } catch (parseErr) {
-            console.error('Error parsing error response:', parseErr);
-          }
+          } catch {}
           throw new Error(errMsg);
         }
         return res.blob();
       })
       .then((blob) => {
-        // Avvia il download
         const url = window.URL.createObjectURL(blob);
+        setPdfUrl(url);
+        // Avvia il download automatico
         const a = document.createElement('a');
         a.href = url;
         a.download = 'identikit.pdf';
         document.body.appendChild(a);
         a.click();
         a.remove();
-
         // Cancella il cookie dopo il download
         document.cookie = 'identikit_answers=; max-age=0; path=/';
       })
@@ -70,7 +70,7 @@ export default function Download() {
       .finally(() => {
         setLoading(false);
       });
-  }, [t]);
+  }, [locale, defaultLocale, t]);
 
   if (loading) {
     return (
@@ -79,6 +79,7 @@ export default function Download() {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="max-w-xl mx-auto p-4 text-red-600 text-center">
@@ -86,7 +87,23 @@ export default function Download() {
       </div>
     );
   }
-  return null;
+
+  // Se arrivi qui, significa che il download è partito o il blob è pronto
+  return (
+    <div className="max-w-xl mx-auto p-4 text-center">
+      <h1 className="text-xl font-semibold mb-4">{t('downloadStarted')}</h1>
+      <p className="mb-4">{t('downloadIfNotStarted')}</p>
+      {pdfUrl && (
+        <a
+          href={pdfUrl}
+          download="identikit.pdf"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {t('downloadLink')}
+        </a>
+      )}
+    </div>
+  );
 }
 
 export async function getServerSideProps({ locale }) {
