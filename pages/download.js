@@ -15,6 +15,7 @@ export default function Download() {
   const router = useRouter();
   const { locale, defaultLocale } = router;
   const { t } = useTranslation('common');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -72,6 +73,7 @@ export default function Download() {
       });
   }, [locale, defaultLocale, t]);
 
+  // Stato loading
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -80,6 +82,7 @@ export default function Download() {
     );
   }
 
+  // Stato errore
   if (error) {
     return (
       <div className="max-w-xl mx-auto p-4 text-red-600 text-center">
@@ -88,7 +91,7 @@ export default function Download() {
     );
   }
 
-   // Se arrivi qui, il fetch è terminato (successo o fallback)
+  // Stato successo/fallback
   return (
     <div className="max-w-xl mx-auto p-4 text-center space-y-4">
       <h1 className="text-xl font-semibold">{t('downloadStarted')}</h1>
@@ -112,3 +115,12 @@ export default function Download() {
       )}
     </div>
   );
+}
+
+export async function getServerSideProps({ locale }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
+}
