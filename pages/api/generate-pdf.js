@@ -9,7 +9,7 @@ export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
 };
 
-// Suddivisione macro-aree: mappa id domanda → area
+// Mappa delle macro-aree
 const AREA_MAP = {
   valori:       [1,2,3,4,5,6,7,8],
   comunicazione:[9,10,11,12,13,14,15],
@@ -19,10 +19,8 @@ const AREA_MAP = {
   influenze:    [36,37]
 };
 
-// Sintesi per area: date le risposte, produce un paragrafo
-function synthesizeArea(areaKey, answers, localeStrings) {
-  const ids = AREA_MAP[areaKey];
-  const texts = ids.map(id => answers[id - 1]);
+function synthesizeArea(areaKey, answers) {
+  const texts = AREA_MAP[areaKey].map(id => answers[id - 1] || '');
   switch (areaKey) {
     case 'valori':
       return `I tuoi valori principali includono: ${texts.slice(0,3).join(', ')}; dedichi inoltre attenzione a ${texts.slice(3,6).join(', ')}.`;
@@ -41,13 +39,13 @@ function synthesizeArea(areaKey, answers, localeStrings) {
   }
 }
 
-// Paragrafo puntuale per domande chiave
 function paragraphForQuestion(id, answer) {
+  if (!answer) return null;
   switch (id) {
     case 3:
       return `Vivi in “${answer}”: questo ambiente influenzerà i luoghi e gli eventi disponibili per te.`;
     case 16:
-      return `Tra le attività preferite: ${answer.join(', ')}.`;
+      return `Tra le attività preferite: ${Array.isArray(answer) ? answer.join(', ') : answer}.`;
     case 22:
       return `Il tuo obiettivo principale per i prossimi 5 anni è: "${answer}".`;
     default:
@@ -58,39 +56,48 @@ function paragraphForQuestion(id, answer) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return res.status(405).end();
-  }
-  const { answers } = req.body;
-  if (!Array.isArray(answers) || answers.length < 37) {
-    return res.status(400).json({ error: 'Risposte incomplete' });
+    return res.status(405).end('Method Not Allowed');
   }
 
-  const locale = req.query.locale || 'it';
-  const pdfJson = JSON.parse(
-    fs.readFileSync(
-      path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json'),
-      'utf8'
-    )
+  const { answers } = req.body;
+  if (!Array.isArray(answers) || answers.length === 0) {
+    return res.status(400).json({ error: 'Nessuna risposta ricevuta' });
+  }
+
+  // Normalizza sempre a 37 risposte
+  const TOTAL_Q = 37;
+  const normalizedAnswers = Array.from(
+    { length: TOTAL_Q },
+    (_, i) => answers[i] !== undefined ? answers[i] : ''
   );
 
-  // Genera sintesi per ciascuna area
-  const areaSections = Object.keys(AREA_MAP).map((areaKey) => ({
-    title: pdfJson.sections[ areaKey === 'valori' ? '1' :
-                               areaKey === 'comunicazione'  ? '1' :
-                               areaKey === 'interessi'      ? '2' :
-                               areaKey === 'aspirazioni'    ? '2' :
-                               areaKey === 'autonomia'      ? '3' :
-                               '4' // influenze
-                             ].title,
-    paragraph: synthesizeArea(areaKey, answers)
+  const locale = req.query.locale || 'it';
+  const pdfJsonPath = path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json');
+  const pdfJson = JSON.parse(fs.readFileSync(pdfJsonPath, 'utf8'));
+
+  // Sezioni dinamiche
+  const areaSections = Object.keys(AREA_MAP).map(areaKey => ({
+    title: (() => {
+      // Mappa areaKey a section index
+      switch(areaKey){
+        case 'valori': return pdfJson.sections['1'].title;
+        case 'comunicazione': return pdfJson.sections['1'].title;
+        case 'interessi': return pdfJson.sections['2'].title;
+        case 'aspirazioni': return pdfJson.sections['2'].title;
+        case 'autonomia': return pdfJson.sections['3'].title;
+        case 'influenze': return pdfJson.sections['3'].title;
+        default: return '';
+      }
+    })(),
+    paragraph: synthesizeArea(areaKey, normalizedAnswers)
   }));
 
   // Paragrafi chiave
   const keyParagraphs = [3,16,22]
-    .map((id) => paragraphForQuestion(id, answers[id - 1]))
+    .map(id => paragraphForQuestion(id, normalizedAnswers[id - 1]))
     .filter(p => p);
 
-  // Headers per il PDF
+  // Imposta headers
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="identikit.pdf"');
 
@@ -101,14 +108,14 @@ export default async function handler(req, res) {
   doc.fontSize(20).text(pdfJson.header, { align: 'center' });
   doc.moveDown();
 
-  // 1) Sintesi valori + comunicazione
+  // 1) Valori & Comunicazione
   doc.fontSize(14).text(pdfJson.sections['1'].title, { underline: true });
   doc.moveDown(0.5);
   doc.fontSize(12).text(areaSections[0].paragraph);
   doc.moveDown(0.5);
   doc.fontSize(12).text(areaSections[1].paragraph);
 
-  // 2) Sintesi interessi + aspirazioni
+  // 2) Interessi & Aspirazioni
   doc.addPage();
   doc.fontSize(14).text(pdfJson.sections['2'].title, { underline: true });
   doc.moveDown(0.5);
@@ -116,7 +123,7 @@ export default async function handler(req, res) {
   doc.moveDown(0.5);
   doc.fontSize(12).text(areaSections[3].paragraph);
 
-  // 3) Autonomia + influenze
+  // 3) Autonomia & Influenze
   doc.addPage();
   doc.fontSize(14).text(pdfJson.sections['3'].title, { underline: true });
   doc.moveDown(0.5);
@@ -124,12 +131,12 @@ export default async function handler(req, res) {
   doc.moveDown(0.5);
   doc.fontSize(12).text(areaSections[5].paragraph);
 
-  // 4) Paragrafi chiave dettagliati
+  // 4) Paragrafi dettagliati
   if (keyParagraphs.length) {
     doc.addPage();
     doc.fontSize(14).text(pdfJson.sections['4'].title, { underline: true });
     doc.moveDown(0.5);
-    keyParagraphs.forEach((p) => {
+    keyParagraphs.forEach(p => {
       doc.fontSize(12).text(p);
       doc.moveDown(0.5);
     });
@@ -151,6 +158,7 @@ export default async function handler(req, res) {
     doc.fontSize(12).text(`${i + 1}. ${app}`);
   });
 
+  // Fine PDF
   doc.end();
   stream.pipe(res);
 }
