@@ -1,4 +1,5 @@
 // pages/questionario.js
+// pages/questionario.js
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -22,6 +23,7 @@ export default function Questionario() {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [freeText, setFreeText] = useState('');
+  const [multiSelected, setMultiSelected] = useState([]);
 
   useEffect(() => {
     const saved = localStorage.getItem('identikit_answers');
@@ -35,17 +37,69 @@ export default function Questionario() {
   const q = questions[current];
   const progress = Math.round(((current + 1) / questions.length) * 100);
 
-  function goNext(answer) {
+  const goNext = (answer) => {
     const newAns = [...answers];
     newAns[current] = answer;
     setAnswers(newAns);
     setFreeText('');
+    setMultiSelected([]);
     if (current < questions.length - 1) {
       setCurrent(current + 1);
     } else {
       router.push('/riepilogo');
     }
+  };
+
+  // Rende la UI per la domanda 16 (multi-select)
+  if (q.id === 16) {
+    return (
+      <div className="max-w-xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
+        <div className="mb-4">
+          <div className="text-sm text-gray-600 mb-1">
+            {current + 1}/{questions.length}
+          </div>
+          <div className="w-full bg-gray-300 h-2 rounded">
+            <div
+              className="bg-blue-500 h-2 rounded"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        <h2 className="text-xl font-semibold mb-4">{q.text}</h2>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {q.options.map((opt) => {
+            const selected = multiSelected.includes(opt);
+            return (
+              <button
+                key={opt}
+                className={`p-2 border rounded ${selected ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'}`}
+                onClick={() => {
+                  if (selected) {
+                    setMultiSelected(multiSelected.filter((o) => o !== opt));
+                  } else if (multiSelected.length < 3) {
+                    setMultiSelected([...multiSelected, opt]);
+                  }
+                }}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          disabled={multiSelected.length === 0}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+          onClick={() => goNext(multiSelected)}
+        >
+          {t('next')}
+        </button>
+      </div>
+    );
   }
+
+  // UI per testo libero
+  const isFreeText = q.options.length === 1 && /testo libero|free text/i.test(q.options[0]);
 
   return (
     <div className="max-w-xl mx-auto p-4">
@@ -61,11 +115,9 @@ export default function Questionario() {
           />
         </div>
       </div>
-
       <h2 className="text-xl font-semibold mb-4">{q.text}</h2>
 
-      {q.options.length === 1 && /testo libero|free text/i.test(q.options[0]) ? (
-        // Free text question
+      {isFreeText ? (
         <div className="flex flex-col space-y-2">
           <textarea
             className="w-full p-2 border rounded h-32"
@@ -82,7 +134,6 @@ export default function Questionario() {
           </button>
         </div>
       ) : (
-        // Multiple choice question
         <div className="space-y-2">
           {q.options.map((opt, idx) => (
             <button
