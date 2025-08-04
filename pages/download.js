@@ -88,12 +88,13 @@ export default function Download() {
     );
   }
 
-  // Se arrivi qui, significa che il download è partito o il blob è pronto
+   // Se arrivi qui, il fetch è terminato (successo o fallback)
   return (
-    <div className="max-w-xl mx-auto p-4 text-center">
-      <h1 className="text-xl font-semibold mb-4">{t('downloadStarted')}</h1>
-      <p className="mb-4">{t('downloadIfNotStarted')}</p>
-      {pdfUrl && (
+    <div className="max-w-xl mx-auto p-4 text-center space-y-4">
+      <h1 className="text-xl font-semibold">{t('downloadStarted')}</h1>
+      <p>{t('downloadIfNotStarted')}</p>
+
+      {pdfUrl ? (
         <a
           href={pdfUrl}
           download="identikit.pdf"
@@ -101,15 +102,13 @@ export default function Download() {
         >
           {t('downloadLink')}
         </a>
+      ) : (
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          {t('retryDownload')}
+        </button>
       )}
     </div>
   );
-}
-
-export async function getServerSideProps({ locale }) {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common'])),
-    },
-  };
-}
