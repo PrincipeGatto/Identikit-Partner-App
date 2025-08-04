@@ -4,21 +4,29 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+// Helper per leggere un cookie
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? decodeURIComponent(v.pop()) : '';
+}
+
 export default function Download() {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Leggiamo le risposte salvate
-    const answers = JSON.parse(localStorage.getItem('identikit_answers') || '[]');
+    // Legge le risposte dal cookie
+    const cookie = getCookie('identikit_answers');
+    const answers = cookie ? JSON.parse(cookie) : [];
+
     if (!answers.length) {
       setError(t('noAnswers'));
       setLoading(false);
       return;
     }
 
-    // Generazione del PDF
+    // Genera il PDF
     fetch('/api/generate-pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -29,7 +37,7 @@ export default function Download() {
         return res.blob();
       })
       .then((blob) => {
-        // Avvio download
+        // Avvia il download
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -38,8 +46,8 @@ export default function Download() {
         a.click();
         a.remove();
 
-        // **Solo dopo** aver avviato il download, cancelliamo le risposte
-        localStorage.removeItem('identikit_answers');
+        // Cancella il cookie delle risposte
+        document.cookie = 'identikit_answers=; max-age=0; path=/';
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
