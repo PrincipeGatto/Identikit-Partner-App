@@ -10,60 +10,80 @@ export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
 };
 
-// Inizializza il client OpenAI
+// Client OpenAI
 const openai = new OpenAIApi(
   new Configuration({ apiKey: process.env.OPENAI_API_KEY })
 );
 
+// Funzione per estrarre cookie dal header
+function parseCookie(cookieHeader) {
+  if (!cookieHeader) return {};
+  return cookieHeader
+    .split(';')
+    .map(v => v.split('='))
+    .reduce((acc, [k, v]) => {
+      acc[k.trim()] = decodeURIComponent(v);
+      return acc;
+    }, {});
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+  let answers;
+
+  if (req.method === 'POST') {
+    // POST: prendi dal body
+    answers = req.body.answers;
+  } else if (req.method === 'GET') {
+    // GET: prendi dal cookie
+    const cookies = parseCookie(req.headers.cookie || '');
+    try {
+      answers = JSON.parse(cookies.identikit_answers || '[]');
+    } catch {
+      answers = [];
+    }
+  } else {
+    res.setHeader('Allow', ['GET', 'POST']);
     return res.status(405).end('Method Not Allowed');
   }
 
-  const { answers } = req.body;
   if (!Array.isArray(answers) || answers.length === 0) {
     return res.status(400).json({ error: 'Nessuna risposta ricevuta' });
   }
 
-  // Carica il template di struttura da pdf.json
+  // Normalizza a 37 risposte
+  const TOTAL_Q = 37;
+  const normalized = Array.from({ length: TOTAL_Q }, (_, i) =>
+    answers[i] !== undefined ? answers[i] : ''
+  );
+
   const locale = req.query.locale || 'it';
   const jsonPath = path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json');
   const pdfJson = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
-  // Costruisci il prompt per ChatGPT
+  // Costruisci il prompt per OpenAI
   const prompt = `
 Sei un assistente che genera report socio-psicologici dettagliati. 
 Ricevi 37 risposte utente:
+${normalized.map((a,i) => `Domanda ${i+1}: ${Array.isArray(a)?a.join(', '):a}`).join('\n')}
 
-${answers.map((a,i) => `Domanda ${i+1}: ${Array.isArray(a)?a.join(', '):a}`).join('\n')}
-
-Utilizza questa struttura (${locale}):
-
+Struttura PDF (${locale}):
 Titolo: ${pdfJson.header}
-
-Sezione 1 - ${pdfJson.sections['1'].title}: ${pdfJson.sections['1'].intro}
-
-Sezione 2 - ${pdfJson.sections['2'].title}: ${pdfJson.sections['2'].intro}
-
-Sezione 3 - ${pdfJson.sections['3'].title}: ${pdfJson.sections['3'].intro}
-
-Sezione 4 - ${pdfJson.sections['4'].title}: ${pdfJson.sections['4'].intro}
-
+1) ${pdfJson.sections['1'].title}: ${pdfJson.sections['1'].intro}
+2) ${pdfJson.sections['2'].title}: ${pdfJson.sections['2'].intro}
+3) ${pdfJson.sections['3'].title}: ${pdfJson.sections['3'].intro}
+4) ${pdfJson.sections['4'].title}: ${pdfJson.sections['4'].intro}
 Luoghi consigliati: ${pdfJson.places.join('; ')}
-
 Strategie di approccio: ${pdfJson.approaches.join('; ')}
 
-Genera un testo di **circa 1000–1200 parole**, suddiviso in paragrafi chiari per ciascuna sezione (1–4), poi un paragrafo per "Luoghi consigliati" e uno per "Strategie di approccio". Non aggiungere altre sezioni.
+Genera un testo di 1000–1200 parole, paragrafato per ciascuna sezione, senza aggiungere altri contenuti.
 `;
 
-  // Chiama ChatGPT
   let report;
   try {
     const completion = await openai.createChatCompletion({
       model: 'gpt-4',
       messages: [
-        { role: 'system', content: 'Sei un generatore di report PDF.' },
+        { role: 'system', content: 'Genera report PDF dettagliati.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -75,7 +95,7 @@ Genera un testo di **circa 1000–1200 parole**, suddiviso in paragrafi chiari p
     return res.status(500).json({ error: 'Errore AI: ' + (err.message || err.toString()) });
   }
 
-  // Prepara il PDF
+  // Headers PDF
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="identikit.pdf"');
 
@@ -86,8 +106,8 @@ Genera un testo di **circa 1000–1200 parole**, suddiviso in paragrafi chiari p
   doc.fontSize(20).text(pdfJson.header, { align: 'center' });
   doc.moveDown();
 
-  // Spezza il report in paragrafi e inserisci
-  report.split(/\n{2,}/).forEach((para) => {
+  // Suddividi report in paragrafi
+  report.split(/\n{2,}/).forEach(para => {
     doc.fontSize(12).text(para.trim());
     doc.moveDown();
   });
