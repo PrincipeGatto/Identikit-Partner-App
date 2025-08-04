@@ -4,54 +4,16 @@ import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
+import { Configuration, OpenAIApi } from 'openai';
 
 export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
 };
 
-// Mappa delle macro-aree
-const AREA_MAP = {
-  valori:       [1,2,3,4,5,6,7,8],
-  comunicazione:[9,10,11,12,13,14,15],
-  interessi:    [16,17,18,19,20,21],
-  aspirazioni:  [22,23,24,25,26,27,28],
-  autonomia:    [29,30,31,32,33,34,35],
-  influenze:    [36,37]
-};
-
-function synthesizeArea(areaKey, answers) {
-  const texts = AREA_MAP[areaKey].map(id => answers[id - 1] || '');
-  switch (areaKey) {
-    case 'valori':
-      return `I tuoi valori principali includono: ${texts.slice(0,3).join(', ')}; dedichi inoltre attenzione a ${texts.slice(3,6).join(', ')}.`;
-    case 'comunicazione':
-      return `In termini di comunicazione, tendi a ${texts[0].toLowerCase()} e preferisci ${texts[2].toLowerCase()}; la tua empatia si colloca a livello ${texts[3]}.`;
-    case 'interessi':
-      return `Le tue passioni spaziano da ${texts.join(', ')}; sei molto aperto a nuove esperienze (${texts[1]}).`;
-    case 'aspirazioni':
-      return `Progetti futuri: "${texts[0]}". Dai molta importanza a ${texts[1]} e consideri ${texts[3]} una priorità.`;
-    case 'autonomia':
-      return `Hai bisogno di ${texts[0]} di spazio personale, bilanciato con momenti condivisi (${texts[3]}).`;
-    case 'influenze':
-      return `Tendi a farti influenzare ${texts[0]} dalle opinioni esterne e attribuisci valore ${texts[1]}.`;
-    default:
-      return '';
-  }
-}
-
-function paragraphForQuestion(id, answer) {
-  if (!answer) return null;
-  switch (id) {
-    case 3:
-      return `Vivi in “${answer}”: questo ambiente influenzerà i luoghi e gli eventi disponibili per te.`;
-    case 16:
-      return `Tra le attività preferite: ${Array.isArray(answer) ? answer.join(', ') : answer}.`;
-    case 22:
-      return `Il tuo obiettivo principale per i prossimi 5 anni è: "${answer}".`;
-    default:
-      return null;
-  }
-}
+// Inizializza il client OpenAI
+const openai = new OpenAIApi(
+  new Configuration({ apiKey: process.env.OPENAI_API_KEY })
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -64,101 +26,72 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Nessuna risposta ricevuta' });
   }
 
-  // Normalizza sempre a 37 risposte
-  const TOTAL_Q = 37;
-  const normalizedAnswers = Array.from(
-    { length: TOTAL_Q },
-    (_, i) => answers[i] !== undefined ? answers[i] : ''
-  );
-
+  // Carica il template di struttura da pdf.json
   const locale = req.query.locale || 'it';
-  const pdfJsonPath = path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json');
-  const pdfJson = JSON.parse(fs.readFileSync(pdfJsonPath, 'utf8'));
+  const jsonPath = path.join(process.cwd(), 'public', 'locales', locale, 'pdf.json');
+  const pdfJson = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
-  // Sezioni dinamiche
-  const areaSections = Object.keys(AREA_MAP).map(areaKey => ({
-    title: (() => {
-      // Mappa areaKey a section index
-      switch(areaKey){
-        case 'valori': return pdfJson.sections['1'].title;
-        case 'comunicazione': return pdfJson.sections['1'].title;
-        case 'interessi': return pdfJson.sections['2'].title;
-        case 'aspirazioni': return pdfJson.sections['2'].title;
-        case 'autonomia': return pdfJson.sections['3'].title;
-        case 'influenze': return pdfJson.sections['3'].title;
-        default: return '';
-      }
-    })(),
-    paragraph: synthesizeArea(areaKey, normalizedAnswers)
-  }));
+  // Costruisci il prompt per ChatGPT
+  const prompt = `
+Sei un assistente che genera report socio-psicologici dettagliati. 
+Ricevi 37 risposte utente:
 
-  // Paragrafi chiave
-  const keyParagraphs = [3,16,22]
-    .map(id => paragraphForQuestion(id, normalizedAnswers[id - 1]))
-    .filter(p => p);
+${answers.map((a,i) => `Domanda ${i+1}: ${Array.isArray(a)?a.join(', '):a}`).join('\n')}
 
-  // Imposta headers
+Utilizza questa struttura (${locale}):
+
+Titolo: ${pdfJson.header}
+
+Sezione 1 - ${pdfJson.sections['1'].title}: ${pdfJson.sections['1'].intro}
+
+Sezione 2 - ${pdfJson.sections['2'].title}: ${pdfJson.sections['2'].intro}
+
+Sezione 3 - ${pdfJson.sections['3'].title}: ${pdfJson.sections['3'].intro}
+
+Sezione 4 - ${pdfJson.sections['4'].title}: ${pdfJson.sections['4'].intro}
+
+Luoghi consigliati: ${pdfJson.places.join('; ')}
+
+Strategie di approccio: ${pdfJson.approaches.join('; ')}
+
+Genera un testo di **circa 1000–1200 parole**, suddiviso in paragrafi chiari per ciascuna sezione (1–4), poi un paragrafo per "Luoghi consigliati" e uno per "Strategie di approccio". Non aggiungere altre sezioni.
+`;
+
+  // Chiama ChatGPT
+  let report;
+  try {
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4',
+      messages: [
+        { role: 'system', content: 'Sei un generatore di report PDF.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+    report = completion.data.choices[0].message.content;
+  } catch (err) {
+    console.error('OpenAI error:', err);
+    return res.status(500).json({ error: 'Errore AI: ' + (err.message || err.toString()) });
+  }
+
+  // Prepara il PDF
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="identikit.pdf"');
 
   const doc = new PDFDocument({ margin: 50 });
   const stream = Readable.from(doc);
 
-  // Intestazione
+  // Scrivi header
   doc.fontSize(20).text(pdfJson.header, { align: 'center' });
   doc.moveDown();
 
-  // 1) Valori & Comunicazione
-  doc.fontSize(14).text(pdfJson.sections['1'].title, { underline: true });
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[0].paragraph);
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[1].paragraph);
-
-  // 2) Interessi & Aspirazioni
-  doc.addPage();
-  doc.fontSize(14).text(pdfJson.sections['2'].title, { underline: true });
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[2].paragraph);
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[3].paragraph);
-
-  // 3) Autonomia & Influenze
-  doc.addPage();
-  doc.fontSize(14).text(pdfJson.sections['3'].title, { underline: true });
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[4].paragraph);
-  doc.moveDown(0.5);
-  doc.fontSize(12).text(areaSections[5].paragraph);
-
-  // 4) Paragrafi dettagliati
-  if (keyParagraphs.length) {
-    doc.addPage();
-    doc.fontSize(14).text(pdfJson.sections['4'].title, { underline: true });
-    doc.moveDown(0.5);
-    keyParagraphs.forEach(p => {
-      doc.fontSize(12).text(p);
-      doc.moveDown(0.5);
-    });
-  }
-
-  // 5) Luoghi consigliati
-  doc.addPage();
-  doc.fontSize(14).text(pdfJson.sections['3'].title, { underline: true });
-  doc.moveDown(0.5);
-  pdfJson.places.forEach((place, i) => {
-    doc.fontSize(12).text(`${i + 1}. ${place}`);
+  // Spezza il report in paragrafi e inserisci
+  report.split(/\n{2,}/).forEach((para) => {
+    doc.fontSize(12).text(para.trim());
+    doc.moveDown();
   });
 
-  // 6) Strategie di approccio
-  doc.addPage();
-  doc.fontSize(14).text(pdfJson.sections['4'].title, { underline: true });
-  doc.moveDown(0.5);
-  pdfJson.approaches.forEach((app, i) => {
-    doc.fontSize(12).text(`${i + 1}. ${app}`);
-  });
-
-  // Fine PDF
   doc.end();
   stream.pipe(res);
 }
