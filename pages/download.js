@@ -34,6 +34,7 @@ export default function Download() {
       return;
     }
 
+    // Solo POST (non GET)
     fetch(`/api/generate-pdf?locale=${locale || defaultLocale}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -43,10 +44,10 @@ export default function Download() {
         if (!res.ok) {
           let errMsg = t('pdfError');
           try {
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-              const errJson = await res.json();
-              errMsg = errJson.error || errJson.message || errMsg;
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const { error: e, message: m } = await res.json();
+              errMsg = e || m || errMsg;
             } else {
               errMsg = await res.text();
             }
@@ -58,14 +59,13 @@ export default function Download() {
       .then((blob) => {
         const url = window.URL.createObjectURL(blob);
         setPdfUrl(url);
-        // Avvia il download
+        // trigger download
         const a = document.createElement('a');
         a.href = url;
         a.download = 'identikit.pdf';
         document.body.appendChild(a);
         a.click();
         a.remove();
-        // Cancella il cookie
         document.cookie = 'identikit_answers=; max-age=0; path=/';
       })
       .catch((err) => {
@@ -77,12 +77,10 @@ export default function Download() {
       });
   }, [locale, defaultLocale, t]);
 
-  // Al mount, chiama fetchPdf
   useEffect(() => {
     fetchPdf();
   }, [fetchPdf]);
 
-  // Stati
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -105,12 +103,12 @@ export default function Download() {
     );
   }
 
-  // Pdf scaricato con successo
+  // Success: mostra messaggio e, se vuoi, il link
   return (
     <div className="max-w-xl mx-auto p-4 text-center space-y-4">
       <h1 className="text-xl font-semibold">{t('downloadStarted')}</h1>
       <p>{t('downloadIfNotStarted')}</p>
-      {/* Il blob è già stato scaricato; qui non serve altro */}
+      {/* Non serve <a> all'API, il download è già partito */}
     </div>
   );
 }
@@ -122,4 +120,3 @@ export async function getServerSideProps({ locale }) {
     },
   };
 }
-
