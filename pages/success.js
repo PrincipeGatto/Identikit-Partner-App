@@ -11,6 +11,7 @@ export default function Success() {
     <div className="max-w-xl mx-auto p-4 text-center">
       <h1 className="text-2xl font-bold mb-4">{t('thankYou')}</h1>
       <p className="mb-6">{t('generatingPDF')}</p>
+      {/* Usare next/link per navigazione client-side */}
       <Link href="/download">
         <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           {t('downloadButton')}
