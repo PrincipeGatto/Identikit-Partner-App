@@ -1,5 +1,4 @@
 // pages/questionario.js
-// pages/questionario.js
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
