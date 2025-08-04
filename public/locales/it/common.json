@@ -14,5 +14,6 @@
   "downloadButton": "Scarica il tuo identikit",
   "downloadStarted": "Il download è stato avviato!",
   "downloadIfNotStarted": "Se il download non parte automaticamente, usa il pulsante qui sotto:",
-  "downloadLink": "Scarica l’identikit manualmente"
+  "downloadLink": "Scarica l’identikit manualmente",
+  "retryDownload": "Riprova download"
 }
