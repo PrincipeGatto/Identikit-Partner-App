@@ -1,15 +1,18 @@
 {
   "appTitle": "Partner Profile",
+  "welcomeMessage": "Welcome! Discover your ideal partner by taking a short questionnaire.",
   "startButton": "Start Questionnaire",
   "submitButton": "Submit",
   "error": "An error occurred",
-  "loading": "Redirecting to payment…",
+  "loading": "Loading…",
+  "generatingPDF": "Generating PDF…",
+  "noAnswers": "No saved answers. Please complete the questionnaire first.",
+  "pdfError": "Error generating the PDF",
   "summaryTitle": "Summary of Your Answers",
   "proceedToPayment": "Proceed to Payment (€9.90)",
   "thankYou": "Thank you for your purchase!",
-  "generatingPDF": "We are generating your PDF…",
   "downloadButton": "Download your profile",
-  "noAnswers": "No saved answers. Please complete the questionnaire first.",
-  "pdfError": "Error generating the PDF",
-  "preparingDownload": "Preparing download…"
+  "downloadStarted": "Your download has started!",
+  "downloadIfNotStarted": "If the download didn’t start automatically, use the button below:",
+  "downloadLink": "Download Profile Manually"
 }
