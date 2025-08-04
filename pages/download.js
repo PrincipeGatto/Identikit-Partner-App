@@ -16,6 +16,7 @@ export default function Download() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Legge le risposte dal cookie
     const cookie = getCookie('identikit_answers');
     const answers = cookie ? JSON.parse(cookie) : [];
 
@@ -32,16 +33,25 @@ export default function Download() {
     })
       .then(async (res) => {
         if (!res.ok) {
+          // Proviamo a leggere un JSON d'errore o, in alternativa, testo semplice
           let errMsg = t('pdfError');
           try {
-            const errJson = await res.json();
-            errMsg = errJson.error || errJson.message || errMsg;
-          } catch {}
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              const errJson = await res.json();
+              errMsg = errJson.error || errJson.message || errMsg;
+            } else {
+              errMsg = await res.text();
+            }
+          } catch (parseErr) {
+            console.error('Error parsing error response:', parseErr);
+          }
           throw new Error(errMsg);
         }
         return res.blob();
       })
       .then((blob) => {
+        // Avvia il download
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -54,6 +64,7 @@ export default function Download() {
         document.cookie = 'identikit_answers=; max-age=0; path=/';
       })
       .catch((err) => {
+        console.error('Download error:', err);
         setError(err.message);
       })
       .finally(() => {
@@ -68,7 +79,6 @@ export default function Download() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="max-w-xl mx-auto p-4 text-red-600 text-center">
@@ -76,7 +86,6 @@ export default function Download() {
       </div>
     );
   }
-
   return null;
 }
 
