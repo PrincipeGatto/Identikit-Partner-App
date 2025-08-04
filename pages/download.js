@@ -1,6 +1,6 @@
 // pages/download.js
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -16,11 +16,15 @@ export default function Download() {
   const { locale, defaultLocale } = router;
   const { t } = useTranslation('common');
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
 
-  useEffect(() => {
+  const fetchPdf = useCallback(() => {
+    setLoading(true);
+    setError('');
+    setPdfUrl('');
+
     const cookie = getCookie('identikit_answers');
     const answers = cookie ? JSON.parse(cookie) : [];
 
@@ -54,26 +58,31 @@ export default function Download() {
       .then((blob) => {
         const url = window.URL.createObjectURL(blob);
         setPdfUrl(url);
-        // Avvia il download automatico
+        // Avvia il download
         const a = document.createElement('a');
         a.href = url;
         a.download = 'identikit.pdf';
         document.body.appendChild(a);
         a.click();
         a.remove();
-        // Cancella il cookie dopo il download
+        // Cancella il cookie
         document.cookie = 'identikit_answers=; max-age=0; path=/';
       })
       .catch((err) => {
         console.error('Download error:', err);
-        setError(err.message);
+        setError(err.message || t('pdfError'));
       })
       .finally(() => {
         setLoading(false);
       });
   }, [locale, defaultLocale, t]);
 
-  // Stato loading
+  // Al mount, chiama fetchPdf
+  useEffect(() => {
+    fetchPdf();
+  }, [fetchPdf]);
+
+  // Stati
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -82,37 +91,26 @@ export default function Download() {
     );
   }
 
-  // Stato errore
   if (error) {
     return (
-      <div className="max-w-xl mx-auto p-4 text-red-600 text-center">
+      <div className="max-w-xl mx-auto p-4 text-red-600 text-center space-y-4">
         <p>{error}</p>
-      </div>
-    );
-  }
-
-  // Stato successo/fallback
-  return (
-    <div className="max-w-xl mx-auto p-4 text-center space-y-4">
-      <h1 className="text-xl font-semibold">{t('downloadStarted')}</h1>
-      <p>{t('downloadIfNotStarted')}</p>
-
-      {pdfUrl ? (
-        <a
-          href={pdfUrl}
-          download="identikit.pdf"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {t('downloadLink')}
-        </a>
-      ) : (
         <button
-          onClick={() => window.location.reload()}
+          onClick={fetchPdf}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           {t('retryDownload')}
         </button>
-      )}
+      </div>
+    );
+  }
+
+  // Pdf scaricato con successo
+  return (
+    <div className="max-w-xl mx-auto p-4 text-center space-y-4">
+      <h1 className="text-xl font-semibold">{t('downloadStarted')}</h1>
+      <p>{t('downloadIfNotStarted')}</p>
+      {/* Il blob è già stato scaricato; qui non serve altro */}
     </div>
   );
 }
@@ -124,3 +122,4 @@ export async function getServerSideProps({ locale }) {
     },
   };
 }
+
