@@ -14,5 +14,6 @@
   "downloadButton": "Download your profile",
   "downloadStarted": "Your download has started!",
   "downloadIfNotStarted": "If the download didn’t start automatically, use the button below:",
-  "downloadLink": "Download Profile Manually"
+  "downloadLink": "Download Profile Manually",
+  "retryDownload": "Retry Download"
 }
